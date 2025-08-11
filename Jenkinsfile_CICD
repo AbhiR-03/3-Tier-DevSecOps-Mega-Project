@@ -87,8 +87,8 @@ pipeline {
                     }
                 }
             }
-             
         }  
+
         
         stage('K8-deploy') {
             steps {
@@ -111,11 +111,48 @@ pipeline {
                             sh 'kubectl get pods -n dev'
                             sh 'kubectl get svc -n dev'
                             
-                        }
+                    }
+                }
+            }
+        }
+
+        stage('Manual Approval for Production') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input message: 'Approve deployment to PRODUCTION?', ok: 'Deploy'
                 }
             }
         }
         
+       stage('Deployment To Prod') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1oSm5kY2ZTOG9Fc2NVNHY1OE82LW4tLXYyQms4QlFKdkFiUUlaZ1l2Y2cifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJwcm9kIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImplbmtpbnMtc2VjcmV0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImplbmtpbnMiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJkOTcwMzJjNi1iZTRhLTRjNjgtYTFkYy0zMzg4M2Q2MzFlZTciLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6cHJvZDpqZW5raW5zIn0.sOBBlLwyxHrRgrriqP2PcnmYELxFGfe-tu_A5z8yy8PB4zBlhxBDYD_RrbZoFesfvVwl6DCrhS-gSs0xKrdwDuFqlETdi77IKSBco8TQicc3r_tQ7RRRMensYVrMchJVaAf9NecWW3FdYotHgRGSu5aSyzOSunXDH1vdoK5UK3po8KjeR9iuR817yFFHP6DRWkxK2lLQCqHi9IOzK_qRTfiReNy4tOo402Fm9oIQJahhQucgzu8LOFNJV3it44886SlcukDEyT_Y2zXGU_O6h6ib98gQgxVLaJpXO0kELJzTBjFSsjto0lm5JwAM4n9PqfFu0466PDcPMw3pDd7C_Q', clusterName: 'devopsshack-cluster', contextName: '', credentialsId: 'k8-prod-token', namespace: 'prod', restrictKubeConfigAccess: false, serverUrl: 'https://8D582C2113847A26B4CA777E59F635D7.gr7.ap-south-1.eks.amazonaws.com') {
+                        sh 'kubectl apply -f k8s-prod/sc.yaml'
+                        sleep 20
+                        sh 'kubectl apply -f k8s-prod/mysql.yaml -n prod'
+                        sh 'kubectl apply -f k8s-prod/backend.yaml -n prod'
+                        sh 'kubectl apply -f k8s-prod/frontend.yaml -n prod'
+                        sh 'kubectl apply -f k8s-prod/ci.yaml'
+                        sh 'kubectl apply -f k8s-prod/ingress.yaml -n prod'
+                        sleep 30
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Deployment To Prod') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1oSm5kY2ZTOG9Fc2NVNHY1OE82LW4tLXYyQms4QlFKdkFiUUlaZ1l2Y2cifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJwcm9kIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImplbmtpbnMtc2VjcmV0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImplbmtpbnMiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJkOTcwMzJjNi1iZTRhLTRjNjgtYTFkYy0zMzg4M2Q2MzFlZTciLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6cHJvZDpqZW5raW5zIn0.sOBBlLwyxHrRgrriqP2PcnmYELxFGfe-tu_A5z8yy8PB4zBlhxBDYD_RrbZoFesfvVwl6DCrhS-gSs0xKrdwDuFqlETdi77IKSBco8TQicc3r_tQ7RRRMensYVrMchJVaAf9NecWW3FdYotHgRGSu5aSyzOSunXDH1vdoK5UK3po8KjeR9iuR817yFFHP6DRWkxK2lLQCqHi9IOzK_qRTfiReNy4tOo402Fm9oIQJahhQucgzu8LOFNJV3it44886SlcukDEyT_Y2zXGU_O6h6ib98gQgxVLaJpXO0kELJzTBjFSsjto0lm5JwAM4n9PqfFu0466PDcPMw3pDd7C_Q', clusterName: 'devopsshack-cluster', contextName: '', credentialsId: 'k8-prod-token', namespace: 'prod', restrictKubeConfigAccess: false, serverUrl: 'https://8D582C2113847A26B4CA777E59F635D7.gr7.ap-south-1.eks.amazonaws.com') {
+                        sh 'kubectl get pods -n prod'
+                        sleep 20
+                         sh 'kubectl get ingress -n prod'
+                        
+                    }
+                }
+            }
+        }
             
     }
 }
