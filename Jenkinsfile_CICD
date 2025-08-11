@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'deploy-to-dev-k8', url: 'https://github.com/jaiswaladi246/3-Tier-DevSecOps-Mega-Project.git'
+                git branch: 'deploy-to-dev-k8', url: 'https://github.com/AbhiR-03/3-Tier-DevSecOps-Mega-Project.git'
             }
         }
         
@@ -65,9 +65,9 @@ pipeline {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred') {
                         dir('api') {
-                            sh 'docker build -t adijaiswal/backend:latest .'
-                            sh 'trivy image --format table -o backend-image-report.html adijaiswal/backend:latest '
-                            sh 'docker push adijaiswal/backend:latest'
+                            sh 'docker build -t rabhi03/backend:latest .'
+                            sh 'trivy image --format table -o backend-image-report.html rabhi03/backend:latest '
+                            sh 'docker push rabhi03/backend:latest'
                            
                         }
                     }
@@ -80,9 +80,9 @@ pipeline {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred') {
                         dir('client') {
-                            sh 'docker build -t adijaiswal/frontend:latest .'
-                            sh 'trivy image --format table -o frontend-image-report.html adijaiswal/frontend:latest '
-                            sh 'docker push adijaiswal/frontend:latest'
+                            sh 'docker build -t rabhi03/frontend:latest .'
+                            sh 'trivy image --format table -o frontend-image-report.html rabhi03/frontend:latest '
+                            sh 'docker push rabhi03/frontend:latest'
                         }
                     }
                 }
@@ -94,10 +94,10 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(caCertificate: '', clusterName: 'devopsshack-cluster', contextName: '', credentialsId: 'k8-token', namespace: 'dev', restrictKubeConfigAccess: false, serverUrl: 'https://042CDFB283295491DDF7A7A422346F3B.gr7.ap-south-1.eks.amazonaws.com') {
-                            sh 'kubectl apply -f k8s/sc.yaml -n dev'
-                            sh 'kubectl apply -f k8s/mysql.yaml -n dev'
-                            sh 'kubectl apply -f k8s/backend.yaml -n dev'
-                            sh 'kubectl apply -f k8s/frontend.yaml -n dev'
+                            sh 'kubectl apply -f k8s-dev/sc.yaml -n dev'
+                            sh 'kubectl apply -f k8s-dev/mysql.yaml -n dev'
+                            sh 'kubectl apply -f k8s-dev/backend.yaml -n dev'
+                            sh 'kubectl apply -f k8s-dev/frontend.yaml -n dev'
                             sleep 30
                         }
                 }
@@ -107,7 +107,7 @@ pipeline {
         stage('verify-K8-deploy') {
             steps {
                 script {
-                    withKubeConfig(caCertificate: '', clusterName: 'devopsshack-cluster', contextName: '', credentialsId: 'k8-token', namespace: 'dev', restrictKubeConfigAccess: false, serverUrl: 'https://042CDFB283295491DDF7A7A422346F3B.gr7.ap-south-1.eks.amazonaws.com') {
+                    withKubeConfig(caCertificate: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1oSm5kY2ZTOG9Fc2NVNHY1OE82LW4tLXYyQms4QlFKdkFiUUlaZ1l2Y2cifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZXYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoibXlzZWNyZXRuYW1lIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImplbmtpbnMiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJmMWQ4ZGQ5Zi03MDE1LTRkYzYtYjgzNC1kNmI1ZDE4ZjcwZTIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGV2OmplbmtpbnMifQ.61DFOBsa2xxCyfHwo8rJgJ8a6EZlBZ1A6UkipgX13GQQuOfko63J4rKSuzF9n3Ezgxw_4jnh3QiwWimgh0HiEImtIIlFSAYnS9ta9apO-uCS3EOCN3pN1e1TUuGZY7Q0gRoeD7GURK_gkpcl323ey2Yxn5odVAW5obmz3jC7QgLRBFwMYTYaCvNRfIIJtQFSMXjdGxCrhgCm5zPeFgRnsamLABi_nTD_qDM8xN6gqG1R7hG2pY04U28997fSsmVWWfjUt6k3MsXNFOVLdpgy5uCdcWlTotNsOqWfEBNazBtjSPcAAmFwPOHDaLYTpMX9X6LhaC_pj7DgTVmJZoHXFg', clusterName: 'devopsshack-cluster', contextName: '', credentialsId: 'k8-token', namespace: 'dev', restrictKubeConfigAccess: false, serverUrl: 'https://8D582C2113847A26B4CA777E59F635D7.gr7.ap-south-1.eks.amazonaws.com') {
                             sh 'kubectl get pods -n dev'
                             sh 'kubectl get svc -n dev'
                             
