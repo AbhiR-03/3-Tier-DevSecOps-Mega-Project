@@ -24,6 +24,10 @@ services:
       DB_NAME: crud_app
       JWT_SECRET: devopsShackSuperSecretKey
       RESET_ADMIN_PASS: 'true'
+    networks:
+    default:
+      aliases:
+        - backend-svc
     depends_on:
       - mysql
     ports:
